@@ -1,6 +1,8 @@
 // YouTube Transcript Sync - Roam Research Extension
 // Fetches YouTube transcripts using Supadata API and inserts them into the user's graph
 
+import React from "react";
+
 // Type declarations for Roam Alpha API
 declare global {
   interface Window {
@@ -645,7 +647,20 @@ function onload({ extensionAPI }) {
       {
         id: "supadata_api_key",
         name: "Supadata API Key",
-        description: "Get your key from supadata.ai",
+        description: React.createElement(
+          React.Fragment,
+          {},
+          "Get your key from ",
+          React.createElement(
+            "a",
+            {
+              href: "https://supadata.ai",
+              target: "_blank",
+              rel: "noopener noreferrer",
+            },
+            "supadata.ai"
+          )
+        ),
         action: {
           type: "input",
           placeholder: "Enter your API key",

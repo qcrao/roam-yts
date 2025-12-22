@@ -16,5 +16,8 @@
   "license": "MIT",
   "devDependencies": {
     "roamjs-scripts": "^0.27.1"
+  },
+  "dependencies": {
+    "react": "^19.2.3"
   }
 }
