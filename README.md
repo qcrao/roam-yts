@@ -2,7 +2,7 @@
 
 A Roam Research extension that fetches YouTube video transcripts and inserts them into your graph.
 
-![Demo](screenshots/demo.png)
+![Demo](https://github.com/qcrao/roam-yts/blob/main/assets/demo.png?raw=true)
 
 ## Features
 
@@ -22,7 +22,7 @@ A Roam Research extension that fetches YouTube video transcripts and inserts the
 2. Open **Settings > YouTube Transcript Sync**
 3. Enter your API key
 
-![Settings](screenshots/settings.png)
+![Settings](https://github.com/qcrao/roam-yts/blob/main/assets/settings.png?raw=true)
 
 ## Usage
 
@@ -32,7 +32,7 @@ A Roam Research extension that fetches YouTube video transcripts and inserts the
 
 > **Tip**: To enable clickable timestamp navigation, click the small button before the YouTube link to embed the video. Without embedding, transcripts will still be imported but timestamps won't jump to the video position.
 
-![Usage](screenshots/usage.png)
+![Usage](https://github.com/qcrao/roam-yts/blob/main/assets/usage.png?raw=true)
 
 ## Transcript Formats
 
@@ -42,9 +42,9 @@ A Roam Research extension that fetches YouTube video transcripts and inserts the
 | **Single Block** | All text in one block with soft line breaks and clickable timestamps |
 | **Code Block** | Plain text in a code block (timestamps are not clickable) |
 
-![single block]()
+![single block](https://github.com/qcrao/roam-yts/blob/main/assets/single%20block.png?raw=true)
 
-![code block]()
+![code block](https://github.com/qcrao/roam-yts/blob/main/assets/code%20block.png?raw=true)
 
 ## License
 
