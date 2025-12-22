@@ -26,9 +26,11 @@ A Roam Research extension that fetches YouTube video transcripts and inserts the
 
 ## Usage
 
-1. Embed a YouTube video in your graph using `{{[[video]]: https://youtube.com/watch?v=...}}`
-2. Click on a block under the video
+1. Paste a YouTube URL in any block (e.g., `https://youtube.com/watch?v=...`)
+2. Click on the block containing the URL
 3. Open command palette (`Cmd/Ctrl + P`) and run **Import Youtube Transcript**
+
+> **Tip**: To enable clickable timestamp navigation, click the small button before the YouTube link to embed the video. Without embedding, transcripts will still be imported but timestamps won't jump to the video position.
 
 ![Usage](screenshots/usage.png)
 
@@ -36,9 +38,9 @@ A Roam Research extension that fetches YouTube video transcripts and inserts the
 
 | Format | Description |
 |--------|-------------|
-| **Nested Blocks** | Each segment as a child block with timestamp |
-| **Single Block** | All text in one block with soft line breaks |
-| **Code Block** | Plain text in a code block |
+| **Nested Blocks** | Each segment as a child block with clickable timestamp |
+| **Single Block** | All text in one block with soft line breaks and clickable timestamps |
+| **Code Block** | Plain text in a code block (timestamps are not clickable) |
 
 ## License
 
