@@ -291,13 +291,15 @@ async function insertTranscript(youtubeBlockUid, segments, mode) {
       },
     });
   } else if (mode === "Code Block") {
-    // Create code block
+    // Create code block (plain text, no language specifier)
+    // Note: Code blocks in Roam don't support clickable timestamps
     const lines = segments.map((segment) => {
       const timestamp = formatTimestamp(segment.offset);
       return `[${timestamp}] ${segment.text}`;
     });
 
-    const content = "```text\n" + lines.join("\n") + "\n```";
+    // Join with double newlines for blank lines between entries
+    const content = "```plain text\n" + lines.join("\n\n") + "\n```";
 
     await window.roamAlphaAPI.createBlock({
       location: {
@@ -420,8 +422,10 @@ async function importYoutubeTranscript(extensionAPI) {
   }
 }
 
-// Timestamp pattern: matches mm:ss or hh:mm:ss at the start of text
-const TIMESTAMP_PATTERN = /^((?:\d+:)?\d+:\d{2})\s/;
+// Timestamp pattern: matches mm:ss or hh:mm:ss at the start of text (with optional bold markers)
+const TIMESTAMP_PATTERN = /^(?:\*\*)?((?:\d+:)?\d+:\d{2})(?:\*\*)?\s/;
+// Pattern to find all timestamps in a block (including bold format used in Single Block mode)
+const ALL_TIMESTAMPS_PATTERN = /(?:\*\*)?((?:\d+:)?\d+:\d{2})(?:\*\*)?(?=\s)/g;
 
 /**
  * Parse timestamp string to seconds
@@ -506,60 +510,88 @@ function addTimestampButtons(): void {
   const blockContainers = document.querySelectorAll('.roam-block-container');
 
   blockContainers.forEach((container) => {
-    // Skip if already processed
-    if (container.querySelector('.yts-timestamp')) return;
-
     // Find the block content - try multiple selectors
     const blockContent = container.querySelector('.rm-block-text, .rm-block__input > span') as HTMLElement;
     if (!blockContent) return;
 
     const text = blockContent.textContent || '';
-    const match = text.match(TIMESTAMP_PATTERN);
 
-    if (match) {
+    // Find all timestamps in the text
+    const timestampMatches: Array<{timestamp: string, seconds: number}> = [];
+    let match;
+    const patternCopy = new RegExp(ALL_TIMESTAMPS_PATTERN.source, 'g');
+    while ((match = patternCopy.exec(text)) !== null) {
       const timestamp = match[1];
-      const seconds = parseTimestamp(timestamp);
+      // Skip if this timestamp was already processed
+      if (!timestampMatches.find(t => t.timestamp === timestamp)) {
+        timestampMatches.push({
+          timestamp,
+          seconds: parseTimestamp(timestamp)
+        });
+      }
+    }
 
-      // Find the first text node containing the timestamp
+    if (timestampMatches.length === 0) return;
+
+    // Process each timestamp
+    for (const {timestamp, seconds} of timestampMatches) {
+      // Find text nodes containing this timestamp that haven't been processed
       const walker = document.createTreeWalker(blockContent, NodeFilter.SHOW_TEXT);
       let node: Text | null;
+      const nodesToProcess: Array<{node: Text, idx: number}> = [];
 
       while ((node = walker.nextNode() as Text)) {
         const nodeText = node.textContent || '';
-        const idx = nodeText.indexOf(timestamp);
-
-        if (idx !== -1) {
-          // Split the text node and wrap the timestamp
-          const before = nodeText.substring(0, idx);
-          const after = nodeText.substring(idx + timestamp.length);
-
-          // Create clickable timestamp span
-          const timestampSpan = document.createElement('span');
-          timestampSpan.className = 'yts-timestamp';
-          timestampSpan.textContent = timestamp;
-          timestampSpan.title = `Click to jump to ${timestamp}`;
-
-          timestampSpan.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const iframe = findYouTubePlayer(container);
-            if (iframe) {
-              seekYouTubeVideo(iframe, seconds);
-            } else {
-              console.log('[YTS] No YouTube player found');
-            }
-          });
-
-          // Replace the text node with the new structure
-          const fragment = document.createDocumentFragment();
-          if (before) fragment.appendChild(document.createTextNode(before));
-          fragment.appendChild(timestampSpan);
-          if (after) fragment.appendChild(document.createTextNode(after));
-
-          node.parentNode?.replaceChild(fragment, node);
-          break;
+        let searchIdx = 0;
+        let idx;
+        while ((idx = nodeText.indexOf(timestamp, searchIdx)) !== -1) {
+          // Check if parent is already a yts-timestamp span
+          if (!node.parentElement?.classList.contains('yts-timestamp')) {
+            nodesToProcess.push({node, idx});
+          }
+          searchIdx = idx + timestamp.length;
         }
+      }
+
+      // Process nodes (in reverse order to maintain correct indices)
+      for (const {node, idx} of nodesToProcess.reverse()) {
+        const nodeText = node.textContent || '';
+        // Re-check index since DOM may have changed
+        const currentIdx = nodeText.indexOf(timestamp);
+        if (currentIdx === -1) continue;
+
+        // Check if already processed
+        if (node.parentElement?.classList.contains('yts-timestamp')) continue;
+
+        // Split the text node and wrap the timestamp
+        const before = nodeText.substring(0, currentIdx);
+        const after = nodeText.substring(currentIdx + timestamp.length);
+
+        // Create clickable timestamp span
+        const timestampSpan = document.createElement('span');
+        timestampSpan.className = 'yts-timestamp';
+        timestampSpan.textContent = timestamp;
+        timestampSpan.title = `Click to jump to ${timestamp}`;
+
+        timestampSpan.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const iframe = findYouTubePlayer(container);
+          if (iframe) {
+            seekYouTubeVideo(iframe, seconds);
+          } else {
+            console.log('[YTS] No YouTube player found');
+          }
+        });
+
+        // Replace the text node with the new structure
+        const fragment = document.createDocumentFragment();
+        if (before) fragment.appendChild(document.createTextNode(before));
+        fragment.appendChild(timestampSpan);
+        if (after) fragment.appendChild(document.createTextNode(after));
+
+        node.parentNode?.replaceChild(fragment, node);
       }
     }
   });
