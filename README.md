@@ -42,6 +42,10 @@ A Roam Research extension that fetches YouTube video transcripts and inserts the
 | **Single Block** | All text in one block with soft line breaks and clickable timestamps |
 | **Code Block** | Plain text in a code block (timestamps are not clickable) |
 
+![single block]()
+
+![code block]()
+
 ## License
 
 MIT
