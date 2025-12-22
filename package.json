@@ -1,0 +1,20 @@
+{
+  "name": "roam-yts",
+  "version": "1.0.0",
+  "description": "YouTube Transcript Sync - Fetch YouTube transcripts using Supadata API and insert them into Roam Research",
+  "main": "extension.js",
+  "scripts": {
+    "build": "roamjs-scripts build --depot"
+  },
+  "keywords": [
+    "roam",
+    "roam-research",
+    "youtube",
+    "transcript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "roamjs-scripts": "^0.27.1"
+  }
+}
