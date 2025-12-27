@@ -691,7 +691,8 @@ function onload({ extensionAPI }) {
               rel: "noopener noreferrer",
             },
             "supadata.ai"
-          )
+          ),
+          ". Free tier includes 100 credits/month - enough for daily use."
         ),
         action: {
           type: "input",

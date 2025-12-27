@@ -18,7 +18,7 @@ A Roam Research extension that fetches YouTube video transcripts and inserts the
 
 ## Setup
 
-1. Get your API key from [supadata.ai](https://supadata.ai)
+1. Get your API key from [supadata.ai](https://supadata.ai) (free tier includes 100 credits/month - enough for daily use)
 2. Open **Settings > YouTube Transcript Sync**
 3. Enter your API key
 
