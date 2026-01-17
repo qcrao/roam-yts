@@ -453,7 +453,11 @@ function findYouTubePlayer(blockElement: Element): HTMLIFrameElement | null {
     const container = current.closest('.roam-block-container');
     if (!container) break;
 
-    // Check parent container for iframe
+    // First check current container for iframe
+    const iframeInCurrent = container.querySelector('iframe[src*="youtube.com"], iframe[src*="youtu.be"]') as HTMLIFrameElement;
+    if (iframeInCurrent) return iframeInCurrent;
+
+    // Then check parent container for iframe
     const parentContainer = container.parentElement?.closest('.roam-block-container');
     if (parentContainer) {
       const iframe = parentContainer.querySelector('iframe[src*="youtube.com"], iframe[src*="youtu.be"]') as HTMLIFrameElement;
@@ -483,10 +487,26 @@ function seekYouTubeVideo(iframe: HTMLIFrameElement, seconds: number): void {
 
   // Ensure enablejsapi=1 is in the URL
   if (!src.includes('enablejsapi=1')) {
+    console.log('[YTS] Adding enablejsapi=1 to iframe URL');
     const separator = src.includes('?') ? '&' : '?';
-    iframe.src = `${src}${separator}enablejsapi=1`;
-  }
+    const newSrc = `${src}${separator}enablejsapi=1`;
+    iframe.src = newSrc;
 
+    // Wait for iframe to reload before sending commands
+    setTimeout(() => {
+      sendYouTubeCommand(iframe, seconds);
+    }, 1000);
+  } else {
+    sendYouTubeCommand(iframe, seconds);
+  }
+}
+
+/**
+ * Send seek command to YouTube iframe
+ * @param {HTMLIFrameElement} iframe - YouTube iframe element
+ * @param {number} seconds - Time in seconds to seek to
+ */
+function sendYouTubeCommand(iframe: HTMLIFrameElement, seconds: number): void {
   // Send seekTo command via postMessage
   iframe.contentWindow?.postMessage(JSON.stringify({
     event: 'command',
@@ -572,18 +592,37 @@ function addTimestampButtons(): void {
         timestampSpan.className = 'yts-timestamp';
         timestampSpan.textContent = timestamp;
         timestampSpan.title = `Click to jump to ${timestamp}`;
+        timestampSpan.setAttribute('contenteditable', 'false');
+        timestampSpan.setAttribute('data-yts-timestamp', seconds.toString());
 
-        timestampSpan.addEventListener('click', (e) => {
+        // Use both click and mousedown events to override Roam's focus handling
+        const handleTimestampClick = (e: Event) => {
           e.preventDefault();
           e.stopPropagation();
+          e.stopImmediatePropagation();
 
+          console.log('[YTS] Timestamp clicked:', timestamp, 'seconds:', seconds);
           const iframe = findYouTubePlayer(container);
           if (iframe) {
+            console.log('[YTS] YouTube player found, seeking to', seconds, 'seconds');
             seekYouTubeVideo(iframe, seconds);
           } else {
-            console.log('[YTS] No YouTube player found');
+            console.log('[YTS] No YouTube player found for timestamp:', timestamp);
           }
-        });
+
+          // Return false to further prevent default behavior
+          return false;
+        };
+
+        // Add event listeners with capture phase to intercept before Roam's handlers
+        timestampSpan.addEventListener('mousedown', handleTimestampClick, true);
+        timestampSpan.addEventListener('click', handleTimestampClick, true);
+        timestampSpan.addEventListener('mouseup', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          return false;
+        }, true);
 
         // Replace the text node with the new structure
         const fragment = document.createDocumentFragment();
@@ -610,10 +649,22 @@ function initTimestampObserver(): void {
       cursor: pointer;
       text-decoration: underline;
       text-decoration-style: dotted;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      pointer-events: auto;
+      display: inline-block;
+      position: relative;
+      z-index: 10;
     }
     .yts-timestamp:hover {
       color: #0d5a8c;
       text-decoration-style: solid;
+      background-color: rgba(19, 124, 189, 0.1);
+    }
+    .yts-timestamp:active {
+      background-color: rgba(19, 124, 189, 0.2);
     }
   `;
   document.head.appendChild(style);
